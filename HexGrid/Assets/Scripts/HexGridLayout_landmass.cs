@@ -9,6 +9,7 @@ public class HexGridLayoutLandmass : HexGridLayout
 {
     public int x, y, zradius;
     public int maxNumOfIslands, minNumOfIslands, minIslandSize, maxIslandSize;
+
     [Button]
     public override void GenerateMap()
     {
@@ -44,8 +45,8 @@ public class HexGridLayoutLandmass : HexGridLayout
     public void ElevateArea(int q, int r, int range, float centerHeight = 1.5f)
     {
         HexRenderer center = GetTileFromCoordinate(new Vector2Int(q, r)).GetComponent<HexRenderer>();
-        List<HexRenderer> tiles = GetHexesWithinRadiusOf(center, range);
-        var noiseMap = GenerateNoiseMap(GetGridSize().x, GetGridSize().y, 4);
+        var noiseMap = GenerateNoiseMap(GetGridSize().x, GetGridSize().y, base.scale);
+        List<HexRenderer> tiles = GetHexesWithinRadiusOf(center, range, noiseMap);
 
         for (var index = 0; index < tiles.Count; index++)
         {

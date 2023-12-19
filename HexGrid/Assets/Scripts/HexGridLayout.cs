@@ -9,7 +9,7 @@ public class HexGridLayout : MonoBehaviour
     [SerializeField] private Vector2Int gridSize;
     [SerializeField] protected List<Biome> biomes;
 
-    [SerializeField] private float scale = 1f;
+    [SerializeField] protected float scale = 1f;
     [SerializeField] private string seed;
 
     [Header("Hex Settings")] 
@@ -90,22 +90,69 @@ public class HexGridLayout : MonoBehaviour
         }
     }
 
-    public List<HexRenderer> GetHexesWithinRadiusOf(HexRenderer center, int radius)
+    public List<HexRenderer> GetHexesWithinRadiusOf(HexRenderer center, int radius, float[,] noiseMap)
     {
         List<HexRenderer> results = new List<HexRenderer>();
+<<<<<<< Updated upstream
         for(var i = 1; i <= radius; i++)
         {
             foreach(var x in GetHexNeighbors(center.coordinate, i))
             {
                 results.Add(GetTileFromCoordinate(x));
                 Debug.Log(GetTileFromCoordinate(x).name);
+=======
+        Queue<HexRenderer> queue = new Queue<HexRenderer>();
+        HashSet<HexRenderer> visited = new HashSet<HexRenderer>();
+        var originalRadius = radius;
+        queue.Enqueue(center);
+        visited.Add(center);
+
+        while (queue.Count > 0 && radius > 0)
+        {
+            int size = queue.Count;
+
+            for (int i = 0; i < size; i++)
+            {
+                HexRenderer current = queue.Dequeue();
+                List<Vector2Int> neighbors = GetHexNeighbors(current.coordinate);
+
+                foreach (Vector2Int neighbor in neighbors)
+                {
+                    HexRenderer neighborHex = GetTileFromCoordinate(neighbor);
+
+                    if (neighborHex != null && !visited.Contains(neighborHex))
+                    {
+                        queue.Enqueue(neighborHex);
+                        visited.Add(neighborHex);
+                        if(radius < originalRadius / 2)
+                        {
+                            var coords = neighborHex.coordinate; 
+                            if(noiseMap[coords.x, coords.y] > 0.5f){
+                                results.Add(neighborHex);    
+                            }
+                        } else {
+                            results.Add(neighborHex);   
+                        }
+
+                    }
+                }
+>>>>>>> Stashed changes
             }
+
+            radius--;
         }
+<<<<<<< Updated upstream
         results.Add(center);
         return results;
     }
 
 
+=======
+
+        results.Add(center);
+        return results;
+    }
+>>>>>>> Stashed changes
 
     private List<Vector2Int> GetHexNeighbors(Vector2Int hex, int distance = 1)
     {
