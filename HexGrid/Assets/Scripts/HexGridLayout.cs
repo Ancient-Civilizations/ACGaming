@@ -9,11 +9,12 @@ public class HexGridLayout : MonoBehaviour
     [SerializeField] private Vector2Int gridSize;
     [SerializeField] protected List<Biome> biomes;
 
-    [SerializeField] private float scale = 1f;
+    [SerializeField] protected float scale = 1f;
     [SerializeField] private string seed;
 
-    [Header("Hex Settings")] 
-    [SerializeField] private float innerSize = 1f;
+    [Header("Hex Settings")] [SerializeField]
+    private float innerSize = 1f;
+
     [SerializeField] private float outerSize = 1.5f;
     [SerializeField] private float height = 1f;
 
@@ -21,12 +22,12 @@ public class HexGridLayout : MonoBehaviour
     {
         return gridSize;
     }
-    
+
     virtual public void GenerateMap()
     {
         RefreshAllChildren();
         var noiseMap = GenerateNoiseMap(gridSize.x, gridSize.y, scale);
-        
+
         for (var y = 0; y < gridSize.y; y++)
         {
             for (var x = 0; x < gridSize.x; x++)
@@ -43,12 +44,12 @@ public class HexGridLayout : MonoBehaviour
                 hexRenderer.flatTopEdge = true;
                 hexRenderer.innerSize = innerSize;
                 hexRenderer.outerSize = outerSize;
-                hexRenderer.height = height;  
+                hexRenderer.height = height;
                 hexRenderer.coordinate = new Vector2Int(x, y);
                 hexRenderer.DrawMesh();
                 tile.transform.SetParent(transform, true);
                 hexRenderer.SetMaterial(biomes[0].mat);
-                
+
                 /*var tileBiome = biomes.Find(biome => hexRenderer.height <= biome.maxHeight);
 
                 if (tileBiome != null)
@@ -79,7 +80,7 @@ public class HexGridLayout : MonoBehaviour
     // }
 
     #endregion
-    
+
     #region Helper Methods
 
     private void RefreshAllChildren()
@@ -90,110 +91,110 @@ public class HexGridLayout : MonoBehaviour
         }
     }
 
-    public List<HexRenderer> GetHexesWithinRadiusOf(HexRenderer center, int radius)
+    public List<HexRenderer> GetHexesWithinRadiusOf(HexRenderer center, int radius, float[,] noiseMap)
     {
         List<HexRenderer> results = new List<HexRenderer>();
-        HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
-        Queue<Vector2Int> queue = new Queue<Vector2Int>();
 
-        Vector2Int centerCoord = center.coordinate;
-        queue.Enqueue(centerCoord);
-        visited.Add(centerCoord);
+        Queue<HexRenderer> queue = new Queue<HexRenderer>();
+        HashSet<HexRenderer> visited = new HashSet<HexRenderer>();
+        var originalRadius = radius;
+        queue.Enqueue(center);
+        visited.Add(center);
 
-        while (queue.Count > 0)
+        while (queue.Count > 0 && radius > 0)
         {
-            Vector2Int current = queue.Dequeue();
-            HexRenderer currentTile = GetTileFromCoordinate(current);
-            if (currentTile != null)
-            {
-                results.Add(currentTile);
-            }
+            int size = queue.Count;
 
-            if (OddROffsetDistance(centerCoord, current) < radius)
+            for (int i = 0; i < size; i++)
             {
-                foreach (Vector2Int neighbor in GetHexNeighbors(current))
+                HexRenderer current = queue.Dequeue();
+                List<Vector2Int> neighbors = GetHexNeighbors(current.coordinate);
+
+                foreach (Vector2Int neighbor in neighbors)
                 {
-                    if (!visited.Contains(neighbor))
+                    HexRenderer neighborHex = GetTileFromCoordinate(neighbor);
+
+                    if (neighborHex != null && !visited.Contains(neighborHex))
                     {
-                        queue.Enqueue(neighbor);
-                        visited.Add(neighbor);
+                        queue.Enqueue(neighborHex);
+                        visited.Add(neighborHex);
+                        if (radius < originalRadius / 2)
+                        {
+                            var coords = neighborHex.coordinate;
+                            if (noiseMap[coords.x, coords.y] > 0.5f)
+                            {
+                                results.Add(neighborHex);
+                            }
+                        }
+                        else
+                        {
+                            results.Add(neighborHex);
+                        }
                     }
                 }
             }
+
+            radius--;
         }
 
+        results.Add(center);
         return results;
     }
-    
-    private int OddROffsetDistance(Vector2Int coord1, Vector2Int coord2)
-    {
-        // Convert odd-r offset to cube coordinates
-        int x1 = coord1.x - (coord1.y - (coord1.y & 1)) / 2;
-        int z1 = coord1.y;
-        int y1 = -x1 - z1;
 
-        int x2 = coord2.x - (coord2.y - (coord2.y & 1)) / 2;
-        int z2 = coord2.y;
-        int y2 = -x2 - z2;
-
-        // Calculate the distance
-        return (Math.Abs(x1 - x2) + Math.Abs(y1 - y2) + Math.Abs(z1 - z2)) / 2;
-    }
-
-    private List<Vector2Int> GetHexNeighbors(Vector2Int hex)
+    private List<Vector2Int> GetHexNeighbors(Vector2Int hex, int distance = 1)
     {
         List<Vector2Int> neighbors = new List<Vector2Int>();
 
         var q = hex.x;
         var r = hex.y;
-        
+
         var isEven = hex.x % 2 == 0;
-        
-        if(isEven)
+
+        if (isEven)
         {
             //Top
-            neighbors.Add(new Vector2Int(q, r - 1));
-            
+            neighbors.Add(new Vector2Int(q, r - distance));
+
             //Top right
-            neighbors.Add(new Vector2Int(q + 1, r - 1));
-            
+            neighbors.Add(new Vector2Int(q + distance, r - distance));
+
             //Bottom right
-            neighbors.Add(new Vector2Int(q + 1, r));
-            
+            neighbors.Add(new Vector2Int(q + distance, r));
+
             //Bottom
-            neighbors.Add(new Vector2Int(q, r + 1));
-            
+            neighbors.Add(new Vector2Int(q, r + distance));
+
             //Bottom left
-            neighbors.Add(new Vector2Int(q - 1, r));
-            
+            neighbors.Add(new Vector2Int(q - distance, r));
+
             //Top left
-            neighbors.Add(new Vector2Int(q - 1, r - 1));
+            neighbors.Add(new Vector2Int(q - distance, r - distance));
         }
         else
         {
             //Top
-            neighbors.Add(new Vector2Int(q, r - 1));
-            
+            neighbors.Add(new Vector2Int(q, r - distance));
+
             //Top right
-            neighbors.Add(new Vector2Int(q + 1, r));
-            
+            neighbors.Add(new Vector2Int(q + distance, r));
+
             //Bottom right
-            neighbors.Add(new Vector2Int(q + 1, r + 1));
-            
+            neighbors.Add(new Vector2Int(q + distance, r + distance));
+
             //Bottom
-            neighbors.Add(new Vector2Int(q, r + 1));
-            
+            neighbors.Add(new Vector2Int(q, r + distance));
+
             //Bottom left
-            neighbors.Add(new Vector2Int(q - 1, r + 1));
-            
+            neighbors.Add(new Vector2Int(q - distance, r + distance));
+
             //Top left
-            neighbors.Add(new Vector2Int(q - 1, r));
+            neighbors.Add(new Vector2Int(q - distance, r));
         }
 
         return neighbors;
     }
 
-    
+
     protected float[,] GenerateNoiseMap(int width, int height, float scale)
     {
         float[,] noiseMap = new float[width, height];
@@ -218,7 +219,7 @@ public class HexGridLayout : MonoBehaviour
 
         return noiseMap;
     }
-    
+
     public HexRenderer GetTileFromCoordinate(Vector2Int coordinate)
     {
         Vector3 targetPosition = GetPositionForHexFromCoordinate(coordinate);

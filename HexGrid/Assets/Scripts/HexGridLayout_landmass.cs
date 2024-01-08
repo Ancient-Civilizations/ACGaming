@@ -9,6 +9,7 @@ public class HexGridLayoutLandmass : HexGridLayout
 {
     public int x, y, zradius;
     public int maxNumOfIslands, minNumOfIslands, minIslandSize, maxIslandSize;
+
     [Button]
     public override void GenerateMap()
     {
@@ -44,8 +45,8 @@ public class HexGridLayoutLandmass : HexGridLayout
     public void ElevateArea(int q, int r, int range, float centerHeight = 1.5f)
     {
         HexRenderer center = GetTileFromCoordinate(new Vector2Int(q, r)).GetComponent<HexRenderer>();
-        List<HexRenderer> tiles = GetHexesWithinRadiusOf(center, range);
-        var noiseMap = GenerateNoiseMap(GetGridSize().x, GetGridSize().y, 4);
+        var noiseMap = GenerateNoiseMap(GetGridSize().x, GetGridSize().y, base.scale);
+        List<HexRenderer> tiles = GetHexesWithinRadiusOf(center, range, noiseMap);
 
         for (var index = 0; index < tiles.Count; index++)
         {
@@ -54,8 +55,14 @@ public class HexGridLayoutLandmass : HexGridLayout
                 tiles[index].SetHeight(0);
             }
             var coord = tiles[index].coordinate;
-            tiles[index].SetHeight(tiles[index].height + noiseMap[coord.x, coord.y] * centerHeight);
+            tiles[index].SetHeight(tiles[index].height + noiseMap[coord.x, coord.y]);
             tiles[index].SetMaterial(biomes[1].mat);
         }
+    }
+
+    public void CreateRiver()
+    {
+        int numOfBends = UnityEngine.Random.Range(1, 5);
+        List<Vector2Int> riverPoints = new List<Vector2Int>();
     }
 }
