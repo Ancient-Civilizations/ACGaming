@@ -59,4 +59,10 @@ public class HexGridLayoutLandmass : HexGridLayout
             tiles[index].SetMaterial(biomes[1].mat);
         }
     }
+
+    public void CreateRiver()
+    {
+        int numOfBends = UnityEngine.Random.Range(1, 5);
+        List<Vector2Int> riverPoints = new List<Vector2Int>();
+    }
 }
